@@ -1,0 +1,59 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/homePage/homePage",
+			"name": "homePage",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/myPage/myPage",
+			"name": "myPage",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/error404/error404",
+			"name": "error404",
+			"style": {
+				"navigationBarTitleText": "error404"
+			}
+		},
+		{
+			"path": "pages/playMusicPage/playMusicPage",
+			"name": "playMusicPage",
+			"style": {
+				"navigationBarTitleText": "playMusicPage",
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"tabBar": {
+		"color": "#B6C3D2",
+		"selectedColor": "#2B2E3D",
+		"borderStyle": "black",
+		"backgroundColor": "#FFFFFF",
+		"list": [
+			{
+				"pagePath": "pages/homePage/homePage",
+				"iconPath": "static/tabBarIcon/home-page.png",
+				"selectedIconPath": "static/tabBarIcon/home-page-selected.png",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/myPage/myPage",
+				"iconPath": "static/tabBarIcon/my-page.png",
+				"selectedIconPath": "static/tabBarIcon/my-page-selected.png",
+				"text": "我的"
+			}
+		]
+	},
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	}
+}

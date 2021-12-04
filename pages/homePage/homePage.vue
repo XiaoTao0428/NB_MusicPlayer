@@ -1,0 +1,38 @@
+<template>
+  <view class="homePage_warp">
+    <view class="to-playMusicPage">
+      <u-button type="primary" text="听音乐" @tap="toPlayMusicPage"></u-button>
+    </view>
+  </view>
+</template>
+
+<script>
+export default {
+  name: "homePage",
+  data() {
+    return {}
+  },
+  methods: {
+    toPlayMusicPage() {
+      this.$Router.push({
+        name: 'playMusicPage'
+      })
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.homePage_warp {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .to-playMusicPage {
+    width: 300rpx;
+    margin-top: 400rpx;
+  }
+
+}
+</style>
