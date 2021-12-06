@@ -1,56 +1,109 @@
 <template>
   <view class="playMusicPage_warp" :style="'height: ' + windowHeight + 'px;'">
 
-    <view class="content">
+    <view class="header">
+      <u-row style="width: 100%; height: 100%;">
+        <u-col span="3" style="width: 100%; height: 100%;">
+          <view class="header-left">
 
+          </view>
+        </u-col>
+        <u-col span="6" style="width: 100%; height: 100%;">
+          <view class="header-center">
+            歌曲
+          </view>
+        </u-col>
+        <u-col span="3" style="width: 100%; height: 100%;">
+          <view class="header-right"></view>
+        </u-col>
+      </u-row>
     </view>
 
-    <view :class="systemType === 'ios'?'bottom ios-bottom':'bottom android-bottom'">
+    <swiper class="swiper_warp"
+            :style="'height: ' + windowHeight + 'px;'"
+            :current="currentPageIndex"
+            @change="changeCurrentPageIndex"
+    >
+      <swiper-item class="swiper-item_warp" :style="'height: ' + windowHeight + 'px;'">
+        123123
+      </swiper-item>
+      <swiper-item class="swiper-item_warp" :style="'height: ' + windowHeight + 'px;'">
 
-      <view class="progress_warp">
-        <view class="progress" @touchstart="progressBegin" @touchmove.stop.prevent="progressTouchmove" @touchend="touchmoveTouchend" @touchcancel="touchendTouchcancel">
-<!--          <u-line-progress :percentage="percentage" height="40rpx"></u-line-progress>-->
-          <view class="line-progress-warp">
-            <view class="line-progress" :style="'width: ' + percentage + 'px;'"></view>
+        <view class="content">
+
+
+
+        </view>
+
+
+        <!--  #ifdef  H5 -->
+        <view class="bottom" @touchmove.stop="">
+          <!--  #endif -->
+
+          <!--  #ifndef  H5 -->
+          <view :class="systemType === 'ios'?'bottom ios-bottom':'bottom android-bottom'" @touchmove.stop="">
+            <!--  #endif -->
+
+            <view class="progress_warp">
+              <view class="progress" @touchstart="progressBegin" @touchmove.stop.prevent="progressTouchmove" @touchend="touchmoveTouchend" @touchcancel="touchendTouchcancel">
+                <view class="line-progress-warp">
+                  <view class="line-progress" :style="'width: ' + percentage + 'px;'"></view>
+                </view>
+                <view class="circle-pointer" :style="'left: ' + circlePointerLeft + 'px;'"></view>
+              </view>
+            </view>
+
+            <view class="time-warp">
+              <view class="time-left">
+                {{currentMusic.currentTime | getMS}}
+              </view>
+              <view class="time-left">
+                {{currentMusic.duration | getMS}}
+              </view>
+            </view>
+
+            <view class="actions_warp">
+
+              <view class="action-item">
+                <u--image v-if="num === 0" src="../../static/icon/order.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
+                <u--image v-if="num === 1" src="../../static/icon/repeat.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
+                <u--image v-if="num === 2" src="../../static/icon/random-order.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
+              </view>
+
+              <view class="action-item">
+                <u-icon name="../../static/icon/back-arrow.png" size="54rpx"></u-icon>
+              </view>
+
+              <view class="action-item">
+                <view class="play-or-pause" @tap="playOrPause" :style="isPlaying?'':'padding-left: 6rpx;'">
+                  <u-icon v-if="!isPlaying" name="play-right-fill" color="#ffffff" size="64rpx"></u-icon>
+                  <u-icon v-if="isPlaying" name="pause" color="#ffffff" size="64rpx"></u-icon>
+                </view>
+              </view>
+
+              <view class="action-item">
+                <u-icon name="../../static/icon/forward-arrow.png" color="#ffffff" size="54rpx"></u-icon>
+              </view>
+
+              <view class="action-item">
+                <u--image src="../../static/icon/music-list.png" mode="widthFit" width="56rpx" height="56rpx" @tap="switchingOrderType"></u--image>
+              </view>
+
+            </view>
+
+            <!--  #ifndef  H5 -->
           </view>
-          <view class="circle-pointer" :style="'left: ' + circlePointerLeft + 'px;'"></view>
+          <!--  #endif -->
+
+          <!--  #ifdef  H5 -->
         </view>
-      </view>
+        <!--  #endif -->
 
-      <view class="time-warp">
-        {{currentMusic.currentTime}} - {{currentMusic.duration}}
-      </view>
-
-      <view class="actions_warp">
-
-        <view class="action-item">
-          <u--image v-if="num === 0" src="../../static/icon/order.png" mode="widthFit" width="65.5rpx" height="50rpx" @tap="switchingOrderType"></u--image>
-          <u--image v-if="num === 1" src="../../static/icon/repeat.png" mode="widthFit" width="65.5rpx" height="50rpx" @tap="switchingOrderType"></u--image>
-          <u--image v-if="num === 2" src="../../static/icon/random-order.png" mode="widthFit" width="65.5rpx" height="50rpx" @tap="switchingOrderType"></u--image>
-<!--          <u-icon name="../../static/icon/repeat.png" size="54rpx"></u-icon>-->
-        </view>
-
-        <view class="action-item">
-          <u-icon name="../../static/icon/back-arrow.png" size="54rpx"></u-icon>
-        </view>
-
-        <view class="action-item">
-          <view class="playOrPause" @tap="playOrPause" :style="isPlaying?'':'padding-left: 6rpx;'">
-            <u-icon v-if="!isPlaying" name="play-right-fill" color="#ffffff" size="64rpx"></u-icon>
-            <u-icon v-if="isPlaying" name="pause" color="#ffffff" size="64rpx"></u-icon>
-          </view>
-        </view>
-
-        <view class="action-item">
-          <u-icon name="../../static/icon/forward-arrow.png" color="#ffffff" size="54rpx"></u-icon>
-        </view>
-
-        <view class="action-item">
-
-        </view>
-
-      </view>
-    </view>
+      </swiper-item>
+      <swiper-item class="swiper-item_warp" :style="'height: ' + windowHeight + 'px;'">
+        123123
+      </swiper-item>
+    </swiper>
 
   </view>
 </template>
@@ -64,6 +117,7 @@ export default {
     return {
       num: 0,
 
+      currentPageIndex: 1,  // 当前所在的滑块页
       systemType: '',  // android 或 ios
       innerAudioContext: null,  // 音频上下文
       windowHeight: 0,  // 屏幕高度
@@ -94,10 +148,17 @@ export default {
         paused: '',  // 当前是是否暂停或停止状态，true 表示暂停或停止，false 表示正在播放
         buffered: '',  // 音频缓冲的时间点，仅保证当前播放时间点到此时间点内容已缓冲
         volume: '',  // 音量。范围 0~1
-      }
+      },
     }
   },
   computed: {
+  },
+  filters: {
+    getMS(time) {
+      const min = parseInt(time % 3600 / 60) < 10 ? '0' + parseInt(time % 3600 / 60) : parseInt(time % 3600 / 60)
+      const sec = parseInt(time % 3600 % 60) < 10 ? '0' + parseInt(time % 3600 % 60) : parseInt(time % 3600 % 60)
+      return min + ':' + sec
+    }
   },
   watch: {
     'currentMusic.currentTime': {
@@ -120,8 +181,8 @@ export default {
       }
     })
 
-    this.offsetLineProgress = uni.upx2px(40)
-    this.sliderWidth = uni.upx2px(40)
+    this.offsetLineProgress = uni.upx2px(65)
+    this.sliderWidth = uni.upx2px(20)
 
     this.createInnerAudioContext()
 
@@ -129,9 +190,6 @@ export default {
     this.systemType = uni.getSystemInfoSync().platform
     if (this.systemType === 'android') {
       let Color = plus.android.importClass("android.graphics.Color")
-
-      console.log(Color)
-
       plus.android.importClass("android.view.Window")
       let mainActivity = plus.android.runtimeMainActivity()
       let window_android = mainActivity.getWindow()
@@ -335,6 +393,13 @@ export default {
         this.num = 0
       }
     },
+
+    /**
+    * 切换当前滑块页
+    * */
+    changeCurrentPageIndex() {
+      console.log('changeCurrentPageIndex')
+    },
   }
 }
 </script>
@@ -342,88 +407,184 @@ export default {
 <style lang="scss" scoped>
 .playMusicPage_warp {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  position: relative;
 
-  .content {
-    flex: 1;
+  .header {
     width: 100%;
-  }
+    height: 80rpx;
+    padding-top: var(--status-bar-height);
+    z-index: 999;
+    background-color: #FFFFFF;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    position: absolute;
+    left: 0;
+    top: 0;
 
-  .bottom {
-    width: 100%;
-    height: 300rpx;
-    background-color: #3F536E;
-
-    .progress_warp {
+    .header-left {
       width: 100%;
-      height: 60rpx;
+      height: 100%;
       background-color: #999999;
-      padding: 0 40rpx;
-      box-sizing: border-box;
-      position: relative;
-
-      .progress {
-        width: 100%;
-        height: 40rpx;
-        background-color: lightsalmon;
-
-        .line-progress-warp {
-          width: 100%;
-          height: 40rpx;
-          background-color: lightsalmon;
-          position: relative;
-          .line-progress {
-            height: 100%;
-            background-color: teal;
-            position: absolute;
-            left: 0;
-            top: 0;
-          }
-        }
-
-        .circle-pointer {
-          width: 40rpx;
-          height: 20rpx;
-          background-color: #007aff;
-          position: absolute;
-          top: 0;
-        }
-      }
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
     }
-
-    .actions_warp {
+    .header-center {
       width: 100%;
-      height: 200rpx;
-      background-color: #9acafc;
+      height: 100%;
+      background-color: #999999;
       display: flex;
       align-items: center;
       justify-content: center;
-
-      .action-item {
-        flex: 1;
-        height: 100%;
-        background-color: #4cd964;
-        margin: 0 10rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .playOrPause {
-          width: 120rpx;
-          height: 120rpx;
-          box-sizing: border-box;
-          border: 4rpx solid #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-        }
-      }
+    }
+    .header-right {
+      width: 100%;
+      height: 100%;
+      background-color: #999999;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
   }
+
+  .swiper_warp {
+    width: 100%;
+
+    .swiper-item_warp {
+      width: 100%;
+      &:nth-child(1) {
+        background-color: #9acafc;
+      }
+      &:nth-child(2) {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        background-color: #383b66;
+
+        .content {
+          flex: 1;
+          width: 100%;
+        }
+
+        .bottom {
+          width: 100%;
+
+          .progress_warp {
+            width: 100%;
+            height: 40rpx;
+            padding: 0 65rpx;
+            box-sizing: border-box;
+            position: relative;
+
+            .progress {
+              width: 100%;
+              height: 28rpx;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              .line-progress-warp {
+                width: 100%;
+                height: 10rpx;
+                background-color: rgba(255, 255, 255, 0.6);
+                border-radius: 5rpx;
+                position: relative;
+                .line-progress {
+                  height: 100%;
+                  background-color: rgba(255, 255, 255, 0.8);
+                  border-radius: 5rpx;
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                }
+              }
+
+              .circle-pointer {
+                width: 20rpx;
+                height: 20rpx;
+                background-color: #FFFFFF;
+                border-radius: 50%;
+                position: absolute;
+                top: 5rpx;
+              }
+            }
+          }
+
+          .time-warp {
+            width: 100%;
+            height: 20rpx;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 30rpx;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 65rpx;
+            box-sizing: border-box;
+
+            .time-left {
+
+            }
+            .time-left {
+
+            }
+          }
+
+          .actions_warp {
+            width: 100%;
+            height: 200rpx;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 0 65rpx;
+            box-sizing: border-box;
+
+            .action-item {
+              flex: 1;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              &:first-child {
+                justify-content: flex-start;
+              }
+
+              &:nth-child(2) {
+                justify-content: flex-start;
+              }
+
+              &:nth-child(4) {
+                justify-content: flex-end;
+              }
+
+              &:last-child {
+                justify-content: flex-end;
+              }
+
+              .play-or-pause {
+                width: 120rpx;
+                height: 120rpx;
+                box-sizing: border-box;
+                border: 4rpx solid #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+              }
+            }
+          }
+        }
+
+      }
+      &:nth-child(3) {
+        background-color: rosybrown;
+      }
+    }
+
+  }
+
 
   .android-bottom {
 
