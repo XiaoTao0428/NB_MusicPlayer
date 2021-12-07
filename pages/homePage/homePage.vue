@@ -7,10 +7,19 @@
 </template>
 
 <script>
+import {mapState} from "vuex"
 export default {
   name: "homePage",
   data() {
     return {}
+  },
+  computed: {
+    ...mapState(['window_android', 'android_graphics_Color'])
+  },
+  onShow() {
+    // #ifdef APP-PLUS
+    // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(255,255,255,255))
+    // #endif
   },
   methods: {
     toPlayMusicPage() {

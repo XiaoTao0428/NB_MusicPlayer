@@ -5,22 +5,26 @@
       <u-row style="width: 100%; height: 100%;">
         <u-col span="3" style="width: 100%; height: 100%;">
           <view class="header-left">
-
+            <u-icon name="arrow-left" size="44rpx"></u-icon>
           </view>
         </u-col>
         <u-col span="6" style="width: 100%; height: 100%;">
           <view class="header-center">
-            歌曲
+            <view :class="currentPageIndex === 0?'header-center-tab header-center-tab-checked':'header-center-tab'" @tap="currentPageIndex = 0">推荐</view>
+            <view :class="currentPageIndex === 1?'header-center-tab header-center-tab-checked':'header-center-tab'" @tap="currentPageIndex = 1">歌曲</view>
+            <view :class="currentPageIndex === 2?'header-center-tab header-center-tab-checked':'header-center-tab'" @tap="currentPageIndex = 2">歌词</view>
           </view>
         </u-col>
         <u-col span="3" style="width: 100%; height: 100%;">
-          <view class="header-right"></view>
+          <view class="header-right">
+<!--            <u-icon name="share-square" size="44rpx"></u-icon>-->
+          </view>
         </u-col>
       </u-row>
     </view>
 
     <swiper class="swiper_warp"
-            :style="'height: ' + windowHeight + 'px;'"
+            :style="'height: ' + windowHeight + 'px; background-color: ' + swiperWarpBg + ';'"
             :current="currentPageIndex"
             @change="changeCurrentPageIndex"
     >
@@ -31,7 +35,30 @@
 
         <view class="content">
 
+          <view class="poster-warp">
+            <canvas class="poster-canvas" canvas-id="posterCanvasId" id="posterCanvasId"></canvas>
+          </view>
 
+          <view class="music-title">
+            <view class="music-name">
+              无归期
+            </view>
+            <view class="collect">
+              <u-icon name="heart" size="70rpx"></u-icon>
+            </view>
+          </view>
+
+          <view class="author">
+            <view class="author-name">
+              郑鱼
+            </view>
+          </view>
+
+          <view class="lyrics">
+            <view class="lyrics-text">
+              悄悄 回忆的过去
+            </view>
+          </view>
 
         </view>
 
@@ -55,10 +82,10 @@
 
             <view class="time-warp">
               <view class="time-left">
-                {{currentMusic.currentTime | getMS}}
+                {{innerCurrentMusic.currentTime | getMS}}
               </view>
               <view class="time-left">
-                {{currentMusic.duration | getMS}}
+                {{innerCurrentMusic.duration | getMS}}
               </view>
             </view>
 
@@ -109,17 +136,21 @@
 </template>
 
 <script>
+import {mapState} from "vuex"
 import {router, RouterMount} from "../../router";
 
 export default {
   name: "playMusicPage",
   data() {
     return {
+      value1: 0,
       num: 0,
+      img: 'https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3880341262,3308316348&fm=26&gp=0.jpg',
 
+
+      Bg: "", //背景颜色
       currentPageIndex: 1,  // 当前所在的滑块页
       systemType: '',  // android 或 ios
-      innerAudioContext: null,  // 音频上下文
       windowHeight: 0,  // 屏幕高度
       windowWidth: 0,  // 屏幕宽度
       statusBarHeight: 0,  // 状态栏高度
@@ -138,8 +169,9 @@ export default {
       percentage: 0,  // 当前进度条的进度宽度
       circlePointerLeft: 0,  // 当前进度条上的圆点滑块的 left
 
-      currentMusic: {  // 当前正则播放的音乐信息
-        src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
+      innerAudioContext: null,  // 音频上下文
+      innerCurrentMusic: {  // 当前正则播放的音乐信息
+        src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',  // 音频的数据源
         startTime: 0,  // 开始播放的位置（单位：s），默认 0
         autoplay: false,  // 是否自动开始播放
         loop: false,  // 是否循环播放
@@ -149,11 +181,31 @@ export default {
         buffered: '',  // 音频缓冲的时间点，仅保证当前播放时间点到此时间点内容已缓冲
         volume: '',  // 音量。范围 0~1
       },
+
+      musicList: [
+        {
+          src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
+
+        }
+      ]
     }
   },
   computed: {
+    ...mapState(['window_android', 'android_graphics_Color']),
+    swiperWarpBg() {
+      let str = ''
+      if (this.currentPageIndex === 1) {
+        str = this.Bg
+      }else {
+        str = '#343233'
+      }
+      return str
+    }
   },
   filters: {
+    /**
+    * 将 秒 转换为 分:秒
+    * */
     getMS(time) {
       const min = parseInt(time % 3600 / 60) < 10 ? '0' + parseInt(time % 3600 / 60) : parseInt(time % 3600 / 60)
       const sec = parseInt(time % 3600 % 60) < 10 ? '0' + parseInt(time % 3600 % 60) : parseInt(time % 3600 % 60)
@@ -161,10 +213,10 @@ export default {
     }
   },
   watch: {
-    'currentMusic.currentTime': {
+    'innerCurrentMusic.currentTime': {
       handler: function () {
-        if (!this.touchMoving && this.currentMusic.duration !== '' && this.currentMusic.currentTime !== '') {
-          this.percentage = this.currentMusic.currentTime / this.currentMusic.duration * this.lineProgressWidth
+        if (!this.touchMoving && this.innerCurrentMusic.duration !== '' && this.innerCurrentMusic.currentTime !== '') {
+          this.percentage = this.innerCurrentMusic.currentTime / this.innerCurrentMusic.duration * this.lineProgressWidth
 
           this.circlePointerLeft = this.percentage + this.offsetLineProgress - this.sliderWidth * 0.5
         }
@@ -181,21 +233,18 @@ export default {
       }
     })
 
-    this.offsetLineProgress = uni.upx2px(65)
+    this.offsetLineProgress = uni.upx2px(64)
     this.sliderWidth = uni.upx2px(20)
 
-    this.createInnerAudioContext()
-
-    // #ifdef APP-PLUS
-    this.systemType = uni.getSystemInfoSync().platform
-    if (this.systemType === 'android') {
-      let Color = plus.android.importClass("android.graphics.Color")
-      plus.android.importClass("android.view.Window")
-      let mainActivity = plus.android.runtimeMainActivity()
-      let window_android = mainActivity.getWindow()
-      window_android.setNavigationBarColor(Color.argb(32,32,32,32))
-    }
+    // #ifndef  APP-PLUS
+    this.createInnerAudioContextNoApp()
     // #endif
+
+    // #ifdef  APP-PLUS
+    // this.createInnerAudioContextApp()
+    this.createInnerAudioContextNoApp()
+    // #endif
+
   },
   onReady() {
     const query = uni.createSelectorQuery().in(this)
@@ -205,81 +254,107 @@ export default {
       this.circlePointerLeft = this.percentage + this.offsetLineProgress - this.sliderWidth * 0.5
 
     }).exec()
+
+    let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
+    this.getImageColor("posterCanvasId", this.img, posterCanvasWidth).then(res => {
+      if(res !== ''){
+        this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
+        console.log('Bg', this.Bg)
+        // #ifdef APP-PLUS
+        // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
+        // #endif
+      }
+    })
+
   },
   onUnload() {
-    // #ifdef MP
-    this.innerAudioContext.offPlay()
-    this.innerAudioContext.offPause()
-    this.innerAudioContext.offError()
-    // this.innerAudioContext.offTimeUpdate()
-    // #endif
     this.innerAudioContext.stop()
     this.innerAudioContext.destroy()
+
+    // #ifdef MP
+    this.innerAudioContext.offCanplay()
+    this.innerAudioContext.offPlay()
+    this.innerAudioContext.offPause()
+    this.innerAudioContext.offStop()
+    this.innerAudioContext.offEnded()
+    this.innerAudioContext.offTimeUpdate()
+    this.innerAudioContext.offError()
+    this.innerAudioContext.offWaiting()
+    this.innerAudioContext.offSeeking()
+    this.innerAudioContext.offSeeked()
+    // #endif
   },
   methods: {
     /**
-    * 创建并返回内部 audio 上下文
+     * app端 创建并返回内部 audio 上下文
+     * */
+    createInnerAudioContextApp() {
+      this.innerAudioContext = uni.getBackgroundAudioManager()
+
+    },
+    /**
+    * 非 app端 创建并返回内部 audio 上下文
     * */
-    createInnerAudioContext() {
+    createInnerAudioContextNoApp() {
       this.innerAudioContext = uni.createInnerAudioContext()
 
-      this.innerAudioContext.src = this.currentMusic.src
-      this.innerAudioContext.startTime = this.currentMusic.startTime
-      this.innerAudioContext.autoplay = this.currentMusic.autoplay
-      this.innerAudioContext.loop = this.currentMusic.loop
+      this.innerAudioContext.src = this.innerCurrentMusic.src
+      this.innerAudioContext.startTime = this.innerCurrentMusic.startTime
+      this.innerAudioContext.autoplay = this.innerCurrentMusic.autoplay
+      this.innerAudioContext.loop = this.innerCurrentMusic.loop
 
       this.innerAudioContext.onCanplay(() => {
         console.log('音频进入可以播放状态，但不保证后面可以流畅播放')
-        this.currentMusic.duration = this.innerAudioContext.duration
-        this.currentMusic.currentTime = this.innerAudioContext.currentTime
-        this.currentMusic.paused = this.innerAudioContext.paused
-        this.currentMusic.buffered = this.innerAudioContext.buffered
-        this.currentMusic.volume = this.innerAudioContext.volume
-        console.log('currentMusic', this.currentMusic)
+        this.innerCurrentMusic.duration = this.innerAudioContext.duration
+        this.innerCurrentMusic.currentTime = this.innerAudioContext.currentTime
+        this.innerCurrentMusic.paused = this.innerAudioContext.paused
+        this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
+        this.innerCurrentMusic.volume = this.innerAudioContext.volume
+        console.log('innerCurrentMusic', this.innerCurrentMusic)
       })
       this.innerAudioContext.onPlay(() => {
         console.log('开始播放')
-        this.currentMusic.currentTime = this.innerAudioContext.currentTime
-        this.currentMusic.paused = this.innerAudioContext.paused
-        this.currentMusic.buffered = this.innerAudioContext.buffered
-        this.currentMusic.volume = this.innerAudioContext.volume
-        console.log('currentMusic', this.currentMusic)
+        this.innerCurrentMusic.currentTime = this.innerAudioContext.currentTime
+        this.innerCurrentMusic.paused = this.innerAudioContext.paused
+        this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
+        this.innerCurrentMusic.volume = this.innerAudioContext.volume
+        console.log('innerCurrentMusic', this.innerCurrentMusic)
         this.isPlaying = true
       })
       this.innerAudioContext.onPause(() => {
         console.log('播放暂停')
-        this.currentMusic.currentTime = this.innerAudioContext.currentTime
-        this.currentMusic.paused = this.innerAudioContext.paused
-        this.currentMusic.buffered = this.innerAudioContext.buffered
-        this.currentMusic.volume = this.innerAudioContext.volume
-        console.log('currentMusic', this.currentMusic)
+        this.innerCurrentMusic.currentTime = this.innerAudioContext.currentTime
+        this.innerCurrentMusic.paused = this.innerAudioContext.paused
+        this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
+        this.innerCurrentMusic.volume = this.innerAudioContext.volume
+        console.log('innerCurrentMusic', this.innerCurrentMusic)
         this.isPlaying = false
       })
       this.innerAudioContext.onStop(() => {
         console.log('音频停止事件')
-        this.currentMusic.currentTime = this.innerAudioContext.currentTime
-        this.currentMusic.paused = this.innerAudioContext.paused
-        this.currentMusic.buffered = this.innerAudioContext.buffered
-        this.currentMusic.volume = this.innerAudioContext.volume
-        console.log('currentMusic', this.currentMusic)
+        this.innerCurrentMusic.currentTime = this.innerAudioContext.currentTime
+        this.innerCurrentMusic.paused = this.innerAudioContext.paused
+        this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
+        this.innerCurrentMusic.volume = this.innerAudioContext.volume
+        console.log('innerCurrentMusic', this.innerCurrentMusic)
         this.isPlaying = false
       })
       this.innerAudioContext.onEnded(() => {
         console.log('音频自然播放结束事件')
-        this.currentMusic.currentTime = this.innerAudioContext.currentTime
-        this.currentMusic.paused = this.innerAudioContext.paused
-        this.currentMusic.buffered = this.innerAudioContext.buffered
-        this.currentMusic.volume = this.innerAudioContext.volume
-        console.log('currentMusic', this.currentMusic)
+        this.innerCurrentMusic.currentTime = this.innerAudioContext.currentTime
+        this.innerCurrentMusic.paused = this.innerAudioContext.paused
+        this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
+        this.innerCurrentMusic.volume = this.innerAudioContext.volume
+        console.log('innerCurrentMusic', this.innerCurrentMusic)
         this.isPlaying = false
       })
       this.innerAudioContext.onTimeUpdate(() => {
         // console.log('音频播放进度更新事件')
-        this.currentMusic.currentTime = this.innerAudioContext.currentTime
-        this.currentMusic.paused = this.innerAudioContext.paused
-        this.currentMusic.buffered = this.innerAudioContext.buffered
-        this.currentMusic.volume = this.innerAudioContext.volume
-        console.log('currentMusic', this.currentMusic)
+        this.innerCurrentMusic.currentTime = this.innerAudioContext.currentTime
+        this.innerCurrentMusic.paused = this.innerAudioContext.paused
+        this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
+        this.innerCurrentMusic.volume = this.innerAudioContext.volume
+        console.log('innerCurrentMusic', this.innerCurrentMusic)
       })
       this.innerAudioContext.onError(() => {
         console.log('音频播放错误')
@@ -340,7 +415,7 @@ export default {
     touchmoveTouchend(e) {
       // console.log('---------进度条拖动结束---------', e)
 
-      let seekTime = this.percentage / this.lineProgressWidth * this.currentMusic.duration
+      let seekTime = this.percentage / this.lineProgressWidth * this.innerCurrentMusic.duration
 
       console.log(this.percentage, this.lineProgressWidth)
 
@@ -397,9 +472,100 @@ export default {
     /**
     * 切换当前滑块页
     * */
-    changeCurrentPageIndex() {
-      console.log('changeCurrentPageIndex')
+    changeCurrentPageIndex(e) {
+      this.currentPageIndex = e.detail.current
     },
+
+    /**
+     * 求图片主题颜色
+     * @param {String} canvasID 画布ID
+     * @param {String} imgID 图片ID
+     * @param {String} imgSrc 图片资源路径
+     * */
+    getImageColor(canvasID, imgSrc, posterCanvasWidth) {
+      return new Promise((resolve, reject) => {
+
+        console.log('1')
+
+        let imgWidth,
+            imgHeight
+        let canvasWidth,
+            canvasHeight
+        let canvas = uni.createCanvasContext(canvasID, this)
+
+        console.log('canvas', canvas)
+
+        // 获取img的宽度/高度
+        imgWidth = Math.round(posterCanvasWidth)
+        imgHeight = Math.round(posterCanvasWidth)
+
+        // 赋值canvas宽度/高度
+        canvasWidth = imgWidth
+        canvasHeight = imgHeight
+        canvas.drawImage(imgSrc, 0, 0, canvasWidth + 2, canvasHeight + 2)
+        canvas.draw(false, () => {
+
+          console.log('2')
+
+          // 获取像素数据
+          uni.canvasGetImageData({
+            // #ifdef MP-WEIXIN
+            canvasId: canvas.canvasId,
+            // #endif
+            // #ifndef MP-WEIXIN
+            canvasId: canvas.id,
+            // #endif
+            x: 0,
+            y: 0,
+            width: imgWidth,
+            height: imgHeight,
+            success: (res) => {
+
+              console.log('3')
+
+              let data = res.data
+
+              let colorArray = [
+                data[0],  // red 通道
+                data[1],  // green 通道
+                data[2],  // blue 通道
+                data[3]  // alpha 通道
+              ]
+
+              // 开启透明度时，imageData 的每四个值代表一个点的 RGBA值
+              for(let cnt = 4; undefined !== data[cnt + 3]; cnt += 1600){
+                colorArray[0] = ((colorArray[0] + data[cnt]) >> 1)
+                colorArray[1] = ((colorArray[1] + data[cnt + 1]) >> 1)
+                colorArray[2] = ((colorArray[2] + data[cnt + 2]) >> 1)
+                colorArray[3] = ((colorArray[3] + data[cnt + 3]) >> 1)
+              }
+
+              console.log('colorArray', colorArray)
+
+              // 将最终的值取整
+              colorArray[0] = Math.round(colorArray[0])
+              colorArray[1] = Math.round(colorArray[1])
+              colorArray[2] = Math.round(colorArray[2])
+              colorArray[3] = Math.round(colorArray[3])
+              let obj = {
+                r: colorArray[0],
+                g: colorArray[1],
+                b: colorArray[2],
+                a: colorArray[3]
+              }
+
+              resolve(obj)
+            },
+            fail: (fail) => {
+              console.log('3-fail', fail)
+              reject(fail)
+            }
+          }, this)
+        })
+      })
+
+    },
+
   }
 }
 </script>
@@ -411,12 +577,14 @@ export default {
 
   .header {
     width: 100%;
-    height: 80rpx;
+    height: 150rpx;
     padding-top: var(--status-bar-height);
+    padding-left: 40rpx;
+    padding-right: 40rpx;
+    box-sizing: border-box;
     z-index: 999;
-    background-color: #FFFFFF;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
     position: absolute;
     left: 0;
@@ -425,7 +593,6 @@ export default {
     .header-left {
       width: 100%;
       height: 100%;
-      background-color: #999999;
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -433,15 +600,35 @@ export default {
     .header-center {
       width: 100%;
       height: 100%;
-      background-color: #999999;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 32rpx;
+      color: rgba(255, 255, 255, 0.4);
+
+      .header-center-tab {
+        flex: 1;
+        height: 14rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-left: 1rpx solid rgba(255, 255, 255, 0.4);
+
+        &:first-child {
+          border-left: 0;
+        }
+        &:last-child {
+          border-right: 0;
+        }
+      }
+
+      .header-center-tab-checked {
+        color: rgba(255, 255, 255, 0.9);
+      }
     }
     .header-right {
       width: 100%;
       height: 100%;
-      background-color: #999999;
       display: flex;
       align-items: center;
       justify-content: flex-end;
@@ -450,22 +637,69 @@ export default {
 
   .swiper_warp {
     width: 100%;
+    background-color: #343233;
+    -webkit-transition-property: background-color;
+    -webkit-transition-duration: 0.3s;
+    -webkit-transition-timing-function: ease;
 
     .swiper-item_warp {
       width: 100%;
+
       &:nth-child(1) {
-        background-color: #9acafc;
       }
       &:nth-child(2) {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        background-color: #383b66;
 
         .content {
           flex: 1;
           width: 100%;
+          padding: 210rpx 64rpx 0 64rpx;
+          box-sizing: border-box;
+
+          .poster-warp {
+            width: calc(100vw - 64rpx - 64rpx);
+            height: calc(100vw - 64rpx - 64rpx);
+            border-radius: 30rpx;
+            overflow: hidden;
+            border: 1rpx solid rgba(255, 255, 255, 0.4);
+
+            .poster-canvas {
+              width: calc(100vw - 64rpx - 64rpx);
+              height: calc(100vw - 64rpx - 64rpx);
+              border-radius: 30rpx;
+            }
+          }
+
+          .music-title {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 70rpx;
+            margin-bottom: 20rpx;
+            color: rgba(255, 255, 255, 0.9);
+            .music-name {
+              font-size: 42rpx;
+              font-weight: bold;
+              white-space: nowrap;
+            }
+          }
+
+          .author {
+            width: 100%;
+            font-size: 30rpx;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 30rpx;
+          }
+
+          .lyrics {
+            width: 100%;
+            font-size: 30rpx;
+            color: rgba(255, 255, 255, 0.6);
+          }
         }
 
         .bottom {
@@ -474,7 +708,7 @@ export default {
           .progress_warp {
             width: 100%;
             height: 40rpx;
-            padding: 0 65rpx;
+            padding: 0 64rpx;
             box-sizing: border-box;
             position: relative;
 
@@ -488,12 +722,12 @@ export default {
               .line-progress-warp {
                 width: 100%;
                 height: 10rpx;
-                background-color: rgba(255, 255, 255, 0.6);
+                background-color: rgba(255, 255, 255, 0.3);
                 border-radius: 5rpx;
                 position: relative;
                 .line-progress {
                   height: 100%;
-                  background-color: rgba(255, 255, 255, 0.8);
+                  background-color: rgba(255, 255, 255, 0.9);
                   border-radius: 5rpx;
                   position: absolute;
                   left: 0;
@@ -520,7 +754,7 @@ export default {
             justify-content: space-between;
             font-size: 30rpx;
             color: rgba(255, 255, 255, 0.6);
-            padding: 0 65rpx;
+            padding: 0 64rpx;
             box-sizing: border-box;
 
             .time-left {
@@ -537,7 +771,7 @@ export default {
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            padding: 0 65rpx;
+            padding: 0 64rpx;
             box-sizing: border-box;
 
             .action-item {
@@ -579,7 +813,6 @@ export default {
 
       }
       &:nth-child(3) {
-        background-color: rosybrown;
       }
     }
 

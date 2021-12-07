@@ -48,7 +48,9 @@
                 ]
             },
             /* ios打包配置 */
-            "ios" : {},
+            "ios" : {
+				"UIBackgroundModes":["audio"]
+			},
             /* SDK配置 */
             "sdkConfigs" : {}
         }
@@ -62,7 +64,8 @@
             "urlCheck" : false,
             "es6" : true
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+		"requiredBackgroundModes": ["audio"]
     },
     "mp-alipay" : {
         "usingComponents" : true
