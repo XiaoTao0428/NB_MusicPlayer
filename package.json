@@ -1,0 +1,24 @@
+{
+  "name": "nb_musicplayer",
+  "version": "1.0.0",
+  "description": "一个基于uniapp，移动端全平台兼容的音乐播放器",
+  "main": "main.js",
+  "dependencies": {
+    "uni-read-pages": "^1.0.5",
+    "uni-simple-router": "^2.0.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XiaoTao0428/NB_MusicPlayer.git"
+  },
+  "author": "YuanTao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/XiaoTao0428/NB_MusicPlayer/issues"
+  },
+  "homepage": "https://github.com/XiaoTao0428/NB_MusicPlayer#readme"
+}
