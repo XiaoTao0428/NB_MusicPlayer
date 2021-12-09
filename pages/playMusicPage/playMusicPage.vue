@@ -1,6 +1,21 @@
 <template>
   <view class="playMusicPage_warp" :style="'height: ' + windowHeight + 'px;'">
 
+    <view class="video-mask" v-if="isVideoBg">
+      <video class="video"
+             :src="videoBgUrl"
+             :autoplay="true"
+             :loop="true"
+             :muted="true"
+             :controls="false"
+             :show-fullscreen-btn="false"
+             :show-play-btn="false"
+             :show-center-play-btn="false"
+             :enable-progress-gesture="false"
+             object-fit="cover"
+      ></video>
+    </view>
+
     <view class="header">
       <u-row style="width: 100%; height: 100%;">
         <u-col span="3" style="width: 100%; height: 100%;">
@@ -24,7 +39,7 @@
     </view>
 
     <swiper class="swiper_warp"
-            :style="'height: ' + windowHeight + 'px; background-color: ' + swiperWarpBg + ';'"
+            :style="isVideoBg?'height: ' + windowHeight + 'px;':'height: ' + windowHeight + 'px; background-color: ' + swiperWarpBg + ';'"
             :current="currentPageIndex"
             @change="changeCurrentPageIndex"
     >
@@ -92,9 +107,9 @@
             <view class="actions_warp">
 
               <view class="action-item">
-                <u--image v-if="num === 0" src="../../static/icon/order.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
-                <u--image v-if="num === 1" src="../../static/icon/repeat.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
-                <u--image v-if="num === 2" src="../../static/icon/random-order.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
+                <u--image v-if="musicListOrderType === 0" src="../../static/icon/order.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
+                <u--image v-if="musicListOrderType === 1" src="../../static/icon/repeat.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
+                <u--image v-if="musicListOrderType === 2" src="../../static/icon/random-order.png" mode="widthFit" width="62rpx" height="47rpx" @tap="switchingOrderType"></u--image>
               </view>
 
               <view class="action-item">
@@ -109,11 +124,11 @@
               </view>
 
               <view class="action-item">
-                <u-icon name="../../static/icon/forward-arrow.png" color="#ffffff" size="54rpx"></u-icon>
+                <u-icon name="../../static/icon/forward-arrow.png" color="#ffffff" size="54rpx" @tap="handleNextMusic"></u-icon>
               </view>
 
               <view class="action-item">
-                <u--image src="../../static/icon/music-list.png" mode="widthFit" width="56rpx" height="56rpx" @tap="switchingOrderType"></u--image>
+                <u--image src="../../static/icon/music-list.png" mode="widthFit" width="56rpx" height="56rpx" @tap="handleMusicListPopupShow"></u--image>
               </view>
 
             </view>
@@ -132,6 +147,16 @@
       </swiper-item>
     </swiper>
 
+    <u-popup :show="musicListPopupShow" :safeAreaInsetBottom="false" @close="musicListPopupClose">
+      <view class="music-list-popup-content" :style="'height: ' + windowHeight * 0.8 + 'px;'">
+        <text>出淤泥而不染，濯清涟而不妖</text>
+        <text>出淤泥而不染，濯清涟而不妖</text>
+        <text>出淤泥而不染，濯清涟而不妖</text>
+        <text>出淤泥而不染，濯清涟而不妖</text>
+        <text>出淤泥而不染，濯清涟而不妖</text>
+      </view>
+    </u-popup>
+
   </view>
 </template>
 
@@ -143,12 +168,11 @@ export default {
   name: "playMusicPage",
   data() {
     return {
-      value1: 0,
-      num: 0,
-      img: 'https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3880341262,3308316348&fm=26&gp=0.jpg',
-
-
-      Bg: "", //背景颜色
+      musicListOrderType: 0,  // 音乐列表循环类型； 0是顺序，1是单曲循环，2是随机播放
+      posterUrl: '',  // 音乐的海报
+      isVideoBg: false,  // 是否是视频背景
+      videoBgUrl: '',  // 视频背景地址
+      Bg: '', //背景颜色
       currentPageIndex: 1,  // 当前所在的滑块页
       systemType: '',  // android 或 ios
       windowHeight: 0,  // 屏幕高度
@@ -171,7 +195,7 @@ export default {
 
       innerAudioContext: null,  // 音频上下文
       innerCurrentMusic: {  // 当前正则播放的音乐信息
-        src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',  // 音频的数据源
+        src: '',  // 音频的数据源
         startTime: 0,  // 开始播放的位置（单位：s），默认 0
         autoplay: false,  // 是否自动开始播放
         loop: false,  // 是否循环播放
@@ -182,12 +206,11 @@ export default {
         volume: '',  // 音量。范围 0~1
       },
 
-      musicList: [
-        {
-          src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
+      musicList: [],  // 音乐列表
+      currMusicListIndex: 0,  // 当前播放的音乐的下标
+      musicListPopupShow: false,  // 音乐列表弹窗是否显示
 
-        }
-      ]
+      oldRandomNum: [],  // 已经随机过了的随机数
     }
   },
   computed: {
@@ -224,7 +247,7 @@ export default {
       immediate: true
     }
   },
-  onLoad() {
+  async onLoad() {
     uni.getSystemInfo({
       success: (res) => {
         this.windowHeight = res.windowHeight
@@ -236,35 +259,18 @@ export default {
     this.offsetLineProgress = uni.upx2px(64)
     this.sliderWidth = uni.upx2px(20)
 
+    await this.loadMusicListData()
+
     // #ifndef  APP-PLUS
-    this.createInnerAudioContextNoApp()
+    // this.createInnerAudioContextNoApp()
     // #endif
-
-    // #ifdef  APP-PLUS
-    // this.createInnerAudioContextApp()
-    this.createInnerAudioContextNoApp()
-    // #endif
-
   },
   onReady() {
     const query = uni.createSelectorQuery().in(this)
     query.select('.line-progress-warp').boundingClientRect((res) => {
       this.lineProgressWidth = res.width
-
       this.circlePointerLeft = this.percentage + this.offsetLineProgress - this.sliderWidth * 0.5
-
     }).exec()
-
-    let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
-    this.getImageColor("posterCanvasId", this.img, posterCanvasWidth).then(res => {
-      if(res !== ''){
-        this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
-        console.log('Bg', this.Bg)
-        // #ifdef APP-PLUS
-        // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
-        // #endif
-      }
-    })
 
   },
   onUnload() {
@@ -284,18 +290,63 @@ export default {
     this.innerAudioContext.offSeeked()
     // #endif
   },
+  /**
+  * 监听手机返回操作
+  * */
+  onBackPress() {
+    // uni.navigateBack()
+  },
   methods: {
-    /**
-     * app端 创建并返回内部 audio 上下文
-     * */
-    createInnerAudioContextApp() {
-      this.innerAudioContext = uni.getBackgroundAudioManager()
+    async loadMusicListData() {
+      setTimeout(() => {
+        this.musicList = [
+          {
+            src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
+            posterUrl: 'https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3880341262,3308316348&fm=26&gp=0.jpg',
+            videoBgUrl: '',
+          },
+          {
+            src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
+            posterUrl: 'https://b2.kuibu.net/file/imgdisk/imgs/2021/12/0218fe16f7fa2058.jpg',
+            videoBgUrl: '',
+          },
+          {
+            src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
+            posterUrl: '',
+            videoBgUrl: 'https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/%E7%AC%AC1%E8%AE%B2%EF%BC%88uni-app%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D%EF%BC%89-%20DCloud%E5%AE%98%E6%96%B9%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B@20200317.mp4',
+          }
+        ]
 
+        this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
+        if (this.musicList[this.currMusicListIndex].posterUrl) {
+          this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+          this.isVideoBg = false
+        }else if (this.musicList[this.currMusicListIndex].videoBgUrl) {
+          this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
+          this.isVideoBg = true
+        }
+
+        if (!this.isVideoBg) {
+          let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
+          this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
+            if(res !== ''){
+              this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
+              console.log('Bg', this.Bg)
+              // #ifdef APP-PLUS
+              // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
+              // #endif
+            }
+          })
+        }
+
+        this.createInnerAudioContextNoApp()
+      }, 2000)
     },
+
     /**
     * 非 app端 创建并返回内部 audio 上下文
     * */
-    createInnerAudioContextNoApp() {
+    createInnerAudioContextNoApp(state) {
       this.innerAudioContext = uni.createInnerAudioContext()
 
       this.innerAudioContext.src = this.innerCurrentMusic.src
@@ -311,6 +362,11 @@ export default {
         this.innerCurrentMusic.buffered = this.innerAudioContext.buffered
         this.innerCurrentMusic.volume = this.innerAudioContext.volume
         console.log('innerCurrentMusic', this.innerCurrentMusic)
+
+        if (state) {
+          this.innerAudioContext.play()
+        }
+
       })
       this.innerAudioContext.onPlay(() => {
         console.log('开始播放')
@@ -463,10 +519,93 @@ export default {
     * 切换播放顺序类型
     * */
     switchingOrderType() {
-      this.num++
-      if (this.num >= 3) {
-        this.num = 0
+      this.musicListOrderType++
+      if (this.musicListOrderType >= 3) {
+        this.musicListOrderType = 0
       }
+    },
+
+    /**
+     * 点击音乐列表图标时触发
+     * */
+    handleMusicListPopupShow() {
+      this.musicListPopupShow = !this.musicListPopupShow
+    },
+
+    /**
+    * 点击下一首时触发
+    * */
+    handleNextMusic() {
+
+      this.innerAudioContext.stop()
+      this.innerAudioContext.destroy()
+
+      if (this.oldRandomNum.length === this.musicList.length) {
+        this.oldRandomNum = []
+      }
+
+      if (this.musicListOrderType === 0) {
+
+        if (this.currMusicListIndex < this.musicList.length - 1) {
+          this.currMusicListIndex++
+        }else {
+          this.currMusicListIndex = 0
+        }
+
+      } else if (this.musicListOrderType === 2) {
+        this.currMusicListIndex = this.getNoCurrRandomNum(this.currMusicListIndex)
+      }
+      this.oldRandomNum.push(this.currMusicListIndex)
+      console.log(this.currMusicListIndex)
+
+      this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
+      if (this.musicList[this.currMusicListIndex].posterUrl) {
+        this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+        this.isVideoBg = false
+      }else if (this.musicList[this.currMusicListIndex].videoBgUrl) {
+        this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
+        this.isVideoBg = true
+      }
+
+      this.createInnerAudioContextNoApp(true)
+
+      // if (!this.isVideoBg) {
+      //   let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
+      //   this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
+      //     if(res !== ''){
+      //       this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
+      //       console.log('Bg', this.Bg)
+      //       // #ifdef APP-PLUS
+      //       // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
+      //       // #endif
+      //     }
+      //   })
+      // }
+
+    },
+
+    /*
+    * 获取之前没有获取过的随机数
+    * */
+    getNoCurrRandomNum() {
+      let num = Math.round(Math.random() * (this.musicList.length - 1))
+      let state = false
+      this.oldRandomNum.forEach((item, index) => {
+        if (num === item) {
+          state = true
+        }
+      })
+      if (state) {
+        num = this.getNoCurrRandomNum()
+      }
+      return num
+    },
+
+    /**
+    * 音乐列表弹出层关闭时触发
+    * */
+    musicListPopupClose() {
+      this.musicListPopupShow = false
     },
 
     /**
@@ -575,6 +714,19 @@ export default {
   width: 100%;
   position: relative;
 
+  .video-mask {
+    width: 100%;
+    height: 100%;
+    background-color: #5ac725;
+    position: absolute;
+    z-index: -999;
+
+    .video {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
   .header {
     width: 100%;
     height: 150rpx;
@@ -637,7 +789,6 @@ export default {
 
   .swiper_warp {
     width: 100%;
-    background-color: #343233;
     -webkit-transition-property: background-color;
     -webkit-transition-duration: 0.3s;
     -webkit-transition-timing-function: ease;
@@ -825,6 +976,11 @@ export default {
 
   .ios-bottom {
     margin-bottom: 40rpx;
+  }
+
+  .music-list-popup-content {
+    width: 100%;
+    height: 80%;
   }
 
 }
