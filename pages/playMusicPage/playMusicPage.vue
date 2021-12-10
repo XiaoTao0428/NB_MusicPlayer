@@ -307,37 +307,41 @@ export default {
           },
           {
             src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
-            posterUrl: 'https://b2.kuibu.net/file/imgdisk/imgs/2021/12/0218fe16f7fa2058.jpg',
+            posterUrl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
             videoBgUrl: '',
           },
           {
             src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
-            posterUrl: '',
+            posterUrl: 'https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg',
             videoBgUrl: 'https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/%E7%AC%AC1%E8%AE%B2%EF%BC%88uni-app%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D%EF%BC%89-%20DCloud%E5%AE%98%E6%96%B9%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B@20200317.mp4',
           }
         ]
 
         this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
-        if (this.musicList[this.currMusicListIndex].posterUrl) {
-          this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
-          this.isVideoBg = false
-        }else if (this.musicList[this.currMusicListIndex].videoBgUrl) {
+
+        if (this.musicList[this.currMusicListIndex].videoBgUrl) {
           this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
           this.isVideoBg = true
+          if (this.musicList[this.currMusicListIndex].posterUrl) {
+            this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+          }
+        }else if (this.musicList[this.currMusicListIndex].posterUrl) {
+          this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+          this.isVideoBg = false
+        }else {
+          this.isVideoBg = false
         }
 
-        if (!this.isVideoBg) {
-          let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
-          this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
-            if(res !== ''){
-              this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
-              console.log('Bg', this.Bg)
-              // #ifdef APP-PLUS
-              // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
-              // #endif
-            }
-          })
-        }
+        let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
+        this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
+          if(res !== ''){
+            this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
+            console.log('Bg', this.Bg)
+            // #ifdef APP-PLUS
+            // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
+            // #endif
+          }
+        })
 
         this.createInnerAudioContextNoApp()
       }, 2000)
@@ -559,28 +563,31 @@ export default {
       console.log(this.currMusicListIndex)
 
       this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
-      if (this.musicList[this.currMusicListIndex].posterUrl) {
-        this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
-        this.isVideoBg = false
-      }else if (this.musicList[this.currMusicListIndex].videoBgUrl) {
+      if (this.musicList[this.currMusicListIndex].videoBgUrl) {
         this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
         this.isVideoBg = true
+        if (this.musicList[this.currMusicListIndex].posterUrl) {
+          this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+        }
+      }else if (this.musicList[this.currMusicListIndex].posterUrl) {
+        this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+        this.isVideoBg = false
+      }else {
+        this.isVideoBg = false
       }
 
       this.createInnerAudioContextNoApp(true)
 
-      // if (!this.isVideoBg) {
-      //   let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
-      //   this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
-      //     if(res !== ''){
-      //       this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
-      //       console.log('Bg', this.Bg)
-      //       // #ifdef APP-PLUS
-      //       // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
-      //       // #endif
-      //     }
-      //   })
-      // }
+      let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
+      this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
+        if(res !== ''){
+          this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
+          console.log('Bg', this.Bg)
+          // #ifdef APP-PLUS
+          // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
+          // #endif
+        }
+      })
 
     },
 
@@ -624,8 +631,6 @@ export default {
     getImageColor(canvasID, imgSrc, posterCanvasWidth) {
       return new Promise((resolve, reject) => {
 
-        console.log('1')
-
         let imgWidth,
             imgHeight
         let canvasWidth,
@@ -644,8 +649,6 @@ export default {
         canvas.drawImage(imgSrc, 0, 0, canvasWidth + 2, canvasHeight + 2)
         canvas.draw(false, () => {
 
-          console.log('2')
-
           // 获取像素数据
           uni.canvasGetImageData({
             // #ifdef MP-WEIXIN
@@ -660,8 +663,6 @@ export default {
             height: imgHeight,
             success: (res) => {
 
-              console.log('3')
-
               let data = res.data
 
               let colorArray = [
@@ -672,7 +673,7 @@ export default {
               ]
 
               // 开启透明度时，imageData 的每四个值代表一个点的 RGBA值
-              for(let cnt = 4; undefined !== data[cnt + 3]; cnt += 1600){
+              for(let cnt = 4; undefined !== data[cnt + 3]; cnt += 160){
                 colorArray[0] = ((colorArray[0] + data[cnt]) >> 1)
                 colorArray[1] = ((colorArray[1] + data[cnt + 1]) >> 1)
                 colorArray[2] = ((colorArray[2] + data[cnt + 2]) >> 1)
