@@ -143,7 +143,14 @@
 
       </swiper-item>
       <swiper-item class="swiper-item_warp" :style="'height: ' + windowHeight + 'px;'">
-        123123
+
+        <scroll-view :scroll-top="lrcFileScrollTop" scroll-y="true" class="lrc-file-scroll-warp"
+                     @scroll="lrcFileScroll">
+          <view class="lrc-item" v-if="currLrcFile && currLrcFile.lines" v-for="(item, index) in currLrcFile.lines">
+            {{item.txt}}
+          </view>
+        </scroll-view>
+
       </swiper-item>
     </swiper>
 
@@ -162,6 +169,8 @@
 
 <script>
 import {mapState} from "vuex"
+import Lyric from 'lyric-parser'
+import lrc_file from './lrc_file'
 import {router, RouterMount} from "../../router";
 
 export default {
@@ -205,6 +214,7 @@ export default {
         buffered: '',  // 音频缓冲的时间点，仅保证当前播放时间点到此时间点内容已缓冲
         volume: '',  // 音量。范围 0~1
       },
+      currLrcFile: {},  // 当前的歌词文件
 
       musicList: [],  // 音乐列表
       currMusicListIndex: 0,  // 当前播放的音乐的下标
@@ -212,6 +222,8 @@ export default {
 
       oldRandomNum: [],  // 已经随机过了的随机数
       previousPushList: [],  // 返回栈
+
+      lrcFileScrollTop: 0,
     }
   },
   computed: {
@@ -305,20 +317,32 @@ export default {
             src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
             posterUrl: 'https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3880341262,3308316348&fm=26&gp=0.jpg',
             videoBgUrl: '',
+            lrcFile: lrc_file,
           },
           {
             src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
             posterUrl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
             videoBgUrl: '',
+            lrcFile: lrc_file,
           },
           {
             src: 'https://bjetxgzv.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3',
             posterUrl: 'https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg',
             videoBgUrl: 'https://img.cdn.aliyun.dcloud.net.cn/guide/uniapp/%E7%AC%AC1%E8%AE%B2%EF%BC%88uni-app%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D%EF%BC%89-%20DCloud%E5%AE%98%E6%96%B9%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B@20200317.mp4',
+            lrcFile: lrc_file,
           }
         ]
 
         this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
+        this.currLrcFile = {}
+
+        if (this.musicList[this.currMusicListIndex].lrcFile) {
+          this.currLrcFile = new Lyric(this.musicList[this.currMusicListIndex].lrcFile, (lineNum, txt) => {
+            console.log(lineNum, txt)
+          })
+        }
+
+        console.log('currLrcFile', this.currLrcFile)
 
         if (this.musicList[this.currMusicListIndex].videoBgUrl) {
           this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
@@ -611,6 +635,7 @@ export default {
       console.log(this.currMusicListIndex)
 
       this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
+      this.currLrcFile = this.musicList[this.currMusicListIndex].lrcFile
       if (this.musicList[this.currMusicListIndex].videoBgUrl) {
         this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
         this.isVideoBg = true
@@ -683,6 +708,7 @@ export default {
       }
 
       this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
+      this.currLrcFile = this.musicList[this.currMusicListIndex].lrcFile
       if (this.musicList[this.currMusicListIndex].videoBgUrl) {
         this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
         this.isVideoBg = true
@@ -749,6 +775,13 @@ export default {
     * */
     changeCurrentPageIndex(e) {
       this.currentPageIndex = e.detail.current
+    },
+
+    /**
+     * 歌词滚动事件
+     * */
+    lrcFileScroll(e) {
+      console.log(e)
     },
 
     /**
@@ -1094,6 +1127,18 @@ export default {
 
       }
       &:nth-child(3) {
+
+        .lrc-file-scroll-warp {
+          width: 100%;
+          height: 100%;
+          padding-top: calc(var(--status-bar-height) + 150rpx);
+          box-sizing: border-box;
+
+          .lrc-item {
+            color: rgba(255, 255, 255, 0.6);
+          }
+        }
+
       }
     }
 
