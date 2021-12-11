@@ -113,7 +113,7 @@
               </view>
 
               <view class="action-item">
-                <u-icon name="../../static/icon/back-arrow.png" size="54rpx"></u-icon>
+                <u-icon name="../../static/icon/back-arrow.png" size="54rpx" @tap="handlePreviousMusic"></u-icon>
               </view>
 
               <view class="action-item">
@@ -211,6 +211,7 @@ export default {
       musicListPopupShow: false,  // 音乐列表弹窗是否显示
 
       oldRandomNum: [],  // 已经随机过了的随机数
+      previousPushList: [],  // 返回栈
     }
   },
   computed: {
@@ -332,6 +333,23 @@ export default {
           this.isVideoBg = false
         }
 
+        let state = false
+        this.oldRandomNum.forEach((item, index) => {
+          if (item === this.currMusicListIndex) {
+            state = true
+          }
+        })
+        if (!state) {
+          this.oldRandomNum.push(this.currMusicListIndex)
+        }
+
+        this.previousPushList.forEach((item, index) => {
+          if (item === this.currMusicListIndex) {
+            this.previousPushList.splice(index, 1)
+          }
+        })
+        this.previousPushList.push(this.currMusicListIndex)
+
         let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
         this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
           if(res !== ''){
@@ -407,6 +425,10 @@ export default {
         this.innerCurrentMusic.volume = this.innerAudioContext.volume
         console.log('innerCurrentMusic', this.innerCurrentMusic)
         this.isPlaying = false
+
+        if (this.musicListOrderType !== 1) {
+          this.handleNextMusic()
+        }
       })
       this.innerAudioContext.onTimeUpdate(() => {
         // console.log('音频播放进度更新事件')
@@ -527,6 +549,14 @@ export default {
       if (this.musicListOrderType >= 3) {
         this.musicListOrderType = 0
       }
+
+      if (this.musicListOrderType === 1) {
+        this.innerAudioContext.loop = true
+        this.innerCurrentMusic.loop = true
+      }else {
+        this.innerAudioContext.loop = false
+        this.innerCurrentMusic.loop = false
+      }
     },
 
     /**
@@ -548,7 +578,7 @@ export default {
         this.oldRandomNum = []
       }
 
-      if (this.musicListOrderType === 0) {
+      if (this.musicListOrderType === 0 || this.musicListOrderType === 1) {
 
         if (this.currMusicListIndex < this.musicList.length - 1) {
           this.currMusicListIndex++
@@ -557,9 +587,27 @@ export default {
         }
 
       } else if (this.musicListOrderType === 2) {
+        console.log('oldRandomNum', this.oldRandomNum.length)
         this.currMusicListIndex = this.getNoCurrRandomNum(this.currMusicListIndex)
       }
-      this.oldRandomNum.push(this.currMusicListIndex)
+
+      let state = false
+      this.oldRandomNum.forEach((item, index) => {
+        if (item === this.currMusicListIndex) {
+          state = true
+        }
+      })
+      if (!state) {
+        this.oldRandomNum.push(this.currMusicListIndex)
+      }
+      console.log('oldRandomNum', this.oldRandomNum.length)
+
+      this.previousPushList.forEach((item, index) => {
+        if (item === this.currMusicListIndex) {
+          this.previousPushList.splice(index, 1)
+        }
+      })
+      this.previousPushList.push(this.currMusicListIndex)
       console.log(this.currMusicListIndex)
 
       this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
@@ -575,6 +623,80 @@ export default {
       }else {
         this.isVideoBg = false
       }
+
+      console.log(this.posterUrl)
+
+      this.createInnerAudioContextNoApp(true)
+
+      let posterCanvasWidth = this.windowWidth - this.offsetLineProgress * 2
+      this.getImageColor("posterCanvasId", this.posterUrl, posterCanvasWidth).then(res => {
+        if(res !== ''){
+          this.Bg = 'rgba('+res.r+','+res.g+','+res.b+','+res.a+')'
+          console.log('Bg', this.Bg)
+          // #ifdef APP-PLUS
+          // this.window_android.setNavigationBarColor(this.android_graphics_Color.argb(res.a,res.r,res.g,res.b))
+          // #endif
+        }
+      })
+
+    },
+
+    /**
+     * 点击上一首时触发
+     * */
+    handlePreviousMusic() {
+      this.innerAudioContext.stop()
+      this.innerAudioContext.destroy()
+
+      if (this.previousPushList.length > 1) {
+        let previousIndex = 0
+        try{
+          this.previousPushList.forEach((item, index) => {
+            if (item === this.currMusicListIndex) {
+              this.previousPushList.splice(index, 1)
+              throw Error()
+            }else {
+              previousIndex = item
+            }
+          })
+        }catch(e){
+        }
+        this.currMusicListIndex = previousIndex
+      }else {
+        if (this.currMusicListIndex <= 0) {
+          this.currMusicListIndex = this.musicList.length - 1
+        }else {
+          this.currMusicListIndex--
+        }
+        this.previousPushList[0] = this.currMusicListIndex
+      }
+
+
+      let state = false
+      this.oldRandomNum.forEach((item, index) => {
+        if (item === this.currMusicListIndex) {
+          state = true
+        }
+      })
+      if (!state) {
+        this.oldRandomNum.push(this.currMusicListIndex)
+      }
+
+      this.innerCurrentMusic.src = this.musicList[this.currMusicListIndex].src
+      if (this.musicList[this.currMusicListIndex].videoBgUrl) {
+        this.videoBgUrl = this.musicList[this.currMusicListIndex].videoBgUrl
+        this.isVideoBg = true
+        if (this.musicList[this.currMusicListIndex].posterUrl) {
+          this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+        }
+      }else if (this.musicList[this.currMusicListIndex].posterUrl) {
+        this.posterUrl = this.musicList[this.currMusicListIndex].posterUrl
+        this.isVideoBg = false
+      }else {
+        this.isVideoBg = false
+      }
+
+      console.log(this.posterUrl)
 
       this.createInnerAudioContextNoApp(true)
 
@@ -594,16 +716,23 @@ export default {
     /*
     * 获取之前没有获取过的随机数
     * */
-    getNoCurrRandomNum() {
+    getNoCurrRandomNum(curr) {
       let num = Math.round(Math.random() * (this.musicList.length - 1))
-      let state = false
-      this.oldRandomNum.forEach((item, index) => {
-        if (num === item) {
-          state = true
+
+      if (this.oldRandomNum.length > 0) {
+        let state = false
+        this.oldRandomNum.forEach((item, index) => {
+          if (num === curr || num === item) {
+            state = true
+          }
+        })
+        if (state) {
+          num = this.getNoCurrRandomNum(curr)
         }
-      })
-      if (state) {
-        num = this.getNoCurrRandomNum()
+      }else {
+        if (num === curr) {
+          num = this.getNoCurrRandomNum(curr)
+        }
       }
       return num
     },
